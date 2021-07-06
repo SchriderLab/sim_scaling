@@ -51,7 +51,7 @@ late() {
 		loss_time = sim.generation - mut.originGeneration;
 		row = loss_time -1;
 		col = mut.mutationType.id -1;
-		loss_mat[row, col] = loss_mat[row,col] + 1
+		loss_mat[row, col] = loss_mat[row,col] + 1;
 	}
 
 	// remove the muts object to free up memory for the next simulation generation
@@ -63,16 +63,16 @@ late() {
 	if (sim.generation == run_time){ 
 		sim.simulationFinished();
 		for (mut in sim.substitutions){
-			to_write = ("m" + mut.mutationType.id + "," + mut.originGeneration + ",", mut.fixationGeneration);
-			writeFile(log_dir + "/fixation_" + asString(job_no) + ".csv", to_write, append=T);
+			to_write = ("m" + mut.mutationType.id + "," + mut.originGeneration + "," +  mut.fixationGeneration);
+			writeFile(store_dir + "/fixation_" + asString(job_no) + ".csv", to_write, append=T);
 		}	
 		// store the loss time matrix into a file
 		for (i in c(0:(run_time-1))){
 			to_write = drop(loss_mat[i, 0:2]);
 			to_write = paste(to_write, sep=",");
-			writeFile(log_dir + "/loss_" + asString(job_no) + ".csv", to_write, append=T);
+			writeFile(store_dir + "/loss_" + asString(job_no) + ".csv", to_write, append=T);
 		}
-		p1.outputVCFSample(100, filePath = log_dir + "/sample_" + asString(job_no) + ".vcf");
+		p1.outputVCFSample(100, filePath = store_dir + "/sample_" + asString(job_no) + ".vcf");
 	}
 }
 
