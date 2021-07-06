@@ -1,0 +1,79 @@
+initialize() {
+	initializeMutationRate(1e-7);
+	
+	// mutation types
+	initializeMutationType("m1", 0.5, "f", 0.5);
+	initializeMutationType("m2", 0.5, "f", 0.2);
+	initializeMutationType("m3", 0.5, "f", -0.1);
+	defineConstant("store_dir", log_dir + "/" + pop_size + "n");
+
+	// create a matrix to store loss times
+	defineConstant("loss_mat", matrix(rep(0, 3*run_time), nrow=run_time));
+	
+	// g1 genomic element type: uses all mutations
+	initializeGenomicElementType("g1", c(m1,m2, m3), c(0.3, 0.3, 0.4));
+	
+	// uniform chromosome of length 100 kb with uniform recombination
+	initializeGenomicElement(g1, 0, 99999);
+	initializeRecombinationRate(1e-8);
+}
+
+1 {
+	// create a subpopulation
+	sim.addSubpop("p1", pop_size);
+	// create the storage directory
+	createDirectory(store_dir);
+	// create the log file 
+	log = sim.createLogFile(store_dir + "/" + "metrics_" + asString(job_no) + ".csv", logInterval=10);
+	log.addGeneration();
+	// keep track of mean fitness
+	log.addCustomColumn("mean_fitness", "mean(p1.cachedFitness(NULL));");
+	// keep track of mutation counts for each mutation type
+	for (mut_type in sim.mutationTypes){
+		log.addCustomColumn("m" + asString(mut_type.id) + "_count", 
+		"sum(p1.genomes.countOfMutationsOfType(m" + asString(mut_type.id) + "));");
+	}
+	// create the headers for the lfixation time file	
+	to_write = ("mutation_id" + "," + "origin_gen" + "," + "fix_gen");
+	writeFile(store_dir + "/fixation_" + asString(job_no) + ".csv", to_write, append=T);	
+}
+
+early() {
+	// store all mutations before lost mutations are deleted
+	defineGlobal("muts", sim.mutations);
+}
+
+late() {
+	// check which stored mutations have been deleted this generation
+	del_muts = muts[!muts.isSegregating & !muts.isFixed];
+	// store the loss times for every deletd mutation in the matrix
+	for (mut in del_muts){
+		loss_time = sim.generation - mut.originGeneration;
+		row = loss_time -1;
+		col = mut.mutationType.id -1;
+		loss_mat[row, col] = loss_mat[row,col] + 1
+	}
+
+	// remove the muts object to free up memory for the next simulation generation
+	rm("muts");
+}
+
+
+1:1000000 late() { 
+	if (sim.generation == run_time){ 
+		sim.simulationFinished();
+		for (mut in sim.substitutions){
+			to_write = ("m" + mut.mutationType.id + "," + mut.originGeneration + ",", mut.fixationGeneration);
+			writeFile(log_dir + "/fixation_" + asString(job_no) + ".csv", to_write, append=T);
+		}	
+		// store the loss time matrix into a file
+		for (i in c(0:(run_time-1))){
+			to_write = drop(loss_mat[i, 0:2]);
+			to_write = paste(to_write, sep=",");
+			writeFile(log_dir + "/loss_" + asString(job_no) + ".csv", to_write, append=T);
+		}
+		p1.outputVCFSample(100, filePath = log_dir + "/sample_" + asString(job_no) + ".vcf");
+	}
+}
+
+
