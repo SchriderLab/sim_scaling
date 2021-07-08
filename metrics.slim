@@ -2,9 +2,9 @@ initialize() {
 	initializeMutationRate(1e-7);
 	
 	// mutation types
-	initializeMutationType("m1", 0.5, "f", 0.5);
-	initializeMutationType("m2", 0.5, "f", 0.2);
-	initializeMutationType("m3", 0.5, "f", -0.1);
+	initializeMutationType("m1", 0.5, "f", 0.05);
+	initializeMutationType("m2", 0.5, "f", 0.02);
+	initializeMutationType("m3", 0.5, "f", -0.01);
 	defineConstant("store_dir", log_dir + "/" + pop_size + "n");
 
 	// create a matrix to store loss times
