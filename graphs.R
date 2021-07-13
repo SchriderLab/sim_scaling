@@ -1,5 +1,5 @@
 library(tidyverse)
-df = read.csv('/pine/scr/a/m/amjada/eff_sim/metrics_10k.csv')
+df = read.csv('/pine/scr/a/m/amjada/eff_sim/metrics_100k.csv')
 
 df_mean <- 
   df %>% 
@@ -9,6 +9,7 @@ df_mean <-
   )
 
 ggplot(data=df_mean, aes(x=generation)) + 
-  geom_point(aes(y=mean_rf), color = 'red', size=0.05) +
-  geom_point(aes(y=mean_m1), color = 'blue', size=0.5) +
-  ylim(c(0,5e6))
+  geom_point(aes(y=mean_rf), color = 'red', size=0.05)
+
+ggplot(data=df_mean, aes(x=generation)) + 
+  geom_point(aes(y=mean_m1), color = 'blue', size=0.05)

@@ -1,10 +1,26 @@
 initialize() {
-	initializeMutationRate(1e-7);
+
+	//command-line constants:
+	//base_pop_size
+	//scaling_factor
+
 	
 	// mutation types
-	initializeMutationType("m1", 0.5, "f", 0.05);
-	initializeMutationType("m2", 0.5, "f", 0.02);
-	initializeMutationType("m3", 0.5, "f", -0.01);
+	initializeMutationType("m1", 0.5, "f", 0.05*scaling_factor);
+	initializeMutationType("m2", 0.5, "f", 0.02*scaling_factor);
+	initializeMutationType("m3", 0.5, "f", -0.01*scaling_factor);
+
+	// define base constants
+	defineConstant("base_mut_rate", 1e-7);
+	defineConstant("base_recomb_rate", 1e-8);
+	
+	// initialize scaled parameters	
+	initializeMutationRate(base_mut_rate * scaling_factor);
+	initializeRecombinationRate(base_recomb_rate * scaling_factor);
+	defineConstant("pop_size", asInteger(base_pop_size * (1/scaling_factor)));
+	defineConstant("run_time", pop_size*4);
+
+	// define storage directory
 	defineConstant("store_dir", log_dir + "/" + pop_size + "n");
 
 	// create a matrix to store loss times
@@ -13,9 +29,8 @@ initialize() {
 	// g1 genomic element type: uses all mutations
 	initializeGenomicElementType("g1", c(m1,m2, m3), c(0.3, 0.3, 0.4));
 	
-	// uniform chromosome of length 100 kb with uniform recombination
-	initializeGenomicElement(g1, 0, 99999);
-	initializeRecombinationRate(1e-8);
+	// uniform chromosome of length 10 kb with uniform recombination
+	initializeGenomicElement(g1, 0, 9999);
 }
 
 1 {
@@ -46,14 +61,14 @@ early() {
 late() {
 	// check which stored mutations have been deleted this generation
 	del_muts = muts[!muts.isSegregating & !muts.isFixed];
-	// store the loss times for every deletd mutation in the matrix
+	// store the loss times for every deleted mutation in the matrix
 	for (mut in del_muts){
 		loss_time = sim.generation - mut.originGeneration;
 		row = loss_time -1;
 		col = mut.mutationType.id -1;
-		loss_mat[row, col] = loss_mat[row,col] + 1;
+		loss_mat[row, col] = loss_mat[row, col] + 1;
 	}
-
+	
 	// remove the muts object to free up memory for the next simulation generation
 	rm("muts");
 }
